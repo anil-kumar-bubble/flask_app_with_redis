@@ -29,7 +29,8 @@ jobs:
         push: true
         tags: |
           anilavulapati/flask-redis-app:latest
-          anilavulapati/flask-redis-app:${{ github.sha }} # Tag with commit SHA for unique versions
+          anilavulapati/flask-redis-app:${{ github.sha }}
+        # Tag with commit SHA for unique versions
 
     - name: Build and push Nginx Docker image (optional, if you want a custom Nginx image)
       # This step is optional. If you just use the standard nginx:latest, you don't need to build it.
