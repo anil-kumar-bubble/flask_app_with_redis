@@ -1,0 +1,47 @@
+#Project 1: docker-compose.yamlThis file defines and links the web-app and redis-cache services.
+version: '3.8' # Specify the Docker Compose file format version
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: myapp_nginx
+    ports:
+      - "80:80" # Map host port 80 to Nginx container port 80
+    volumes:
+      # Mount your custom nginx.conf into the container
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Optional: if you have static files served by Nginx
+      
+      # - ./flask_app/static:/usr/share/nginx/html/static:ro
+    depends_on:
+      - flask_app # Nginx depends on flask_app to be running
+    networks:
+      - app_network # Connect Nginx to the custom network
+  # Service 1: web-app (our Flask application)
+  flask_app:
+    build: ./web-app # Tells Docker Compose to build the image from the Dockerfile in the ./web-app directory
+    # Maps port 5000 on the host to port 5000 in the container
+    environment:
+      # Pass the Redis hostname to the Flask app.
+      # Docker Compose automatically creates a network where services can resolve each other by their service names.
+      - REDIS_HOST=redis-cache
+      - FLASK_APP=app.py
+    depends_on:
+      - redis-cache # Ensures redis-cache starts before web-app (though web-app will still need to handle Redis being ready)
+    networks:
+      - app_network
+  # Service 2: redis-cache (the Redis server)
+  redis-cache:
+    image: "redis:latest" # Uses the official Redis image from Docker Hub
+     # Maps Redis's default port 6379 on the host to port 6379 in the container
+    # Volumes for data persistence (optional but good practice for databases/caches)
+    volumes:
+      - redis_data:/data # Mounts a named volume to persist Redis data
+    networks:
+      - app_network
+# Define named volumes for data persistence
+volumes:
+  redis_data:
+networks:
+  app_network:
+    driver: bridge
