@@ -1,0 +1,48 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - master  # or 'master' if that's your default branch
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Flask app Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./web-app  # Path to your Dockerfile for the Flask app
+        file: ./web-app/Dockerfile
+        push: true
+        tags: |
+          anilavulapati/flask-redis-app:latest
+          anilavulapati/flask-redis-app:${{ github.sha }} # Tag with commit SHA for unique versions
+
+    - name: Build and push Nginx Docker image (optional, if you want a custom Nginx image)
+      # This step is optional. If you just use the standard nginx:latest, you don't need to build it.
+      # However, if you have custom Nginx configurations that need to be baked into an image,
+      # you would create a Dockerfile for Nginx and build it here.
+      # For this project, we are mounting the nginx.conf, so a custom build is not strictly necessary
+      # unless you have other Nginx customizations.
+      if: false # Set to true if you create a Dockerfile for Nginx
+      uses: docker/build-push-action@v5
+      with:
+        context: ./nginx # Path to your Nginx Dockerfile (if you create one)
+        file: ./nginx/Dockerfile # Path to your Nginx Dockerfile
+        push: true
+        tags: |
+          your-dockerhub-username/nginx-proxy:latest
+          your-dockerhub-username/nginx-proxy:${{ github.sha }}
